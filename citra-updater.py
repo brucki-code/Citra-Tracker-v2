@@ -887,6 +887,8 @@ def calcPower(pkmn,move,hp1,hp2,pkmnwt,enwt):
     if move['name']=="Frustration":
         return round((255-pkmn.friendship)/2.5)
     if move["name"] in ("Low Kick","Grass Knot"):
+        if not enwt:  # Check if enwt is None or empty
+            return "WT"
         try:
             weightnum=cursor.execute(enwt).fetchone()[0]
             if weightnum>=200:
@@ -904,6 +906,8 @@ def calcPower(pkmn,move,hp1,hp2,pkmnwt,enwt):
         except:
             return "WT"
     if move["name"] in ("Heat Crash","Heavy Slam"):
+        if not enwt:  # Check if enwt is None or empty
+            return "WT"
         try:
             weightnum=cursor.execute(enwt).fetchone()[0]
             weightratio=(pkmnwt/weightnum)
@@ -1632,6 +1636,7 @@ def run():
                     pkmni=0
                     emon = ''
                     abblist = []
+                    weightquery = None  # Initialize to avoid UnboundLocalError
                     for pkmn in party:
                         if pkmn in party1:
                             if pkmn.species_num()==0:
@@ -1649,8 +1654,41 @@ def run():
                                 pkmn.getAtts(gamegroupid,gen)
                                 if pkmn.suffix!="":
                                     weightquery=f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" AND form = "{pkmn.suffix}" """ 
-                                else: weightquery=f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" """ 
+                                else: 
+                                    weightquery=f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" """ 
                                 break
+                     # Fallback: if weightquery still None, try to set it from any valid party2 mon
+                    if not weightquery:
+                        try:
+                            for pkmn in party2:
+                                if pkmn.species_num() in range(1,808):
+                                    try:
+                                        pkmn.getAtts(gamegroupid,gen)
+                                    except Exception:
+                                        pass
+                                if pkmn.suffix != "":
+                                    weightquery = f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" AND form = "{pkmn.suffix}" """
+                                else:
+                                    weightquery = f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" """
+                                break
+                        except Exception:
+                            pass
+                    # If we fell back to a party2 mon (because enemynum didn't match),
+                    # make sure later display code still sees the enemy slot by
+                    # restoring the combined party list and setting a sensible pkmnindex
+                    # (use first valid party2 slot).
+                    try:
+                        if weightquery:
+                            # restore party to include party2 entries (they may have been removed above)
+                            party = party1 + party2
+                            # set pkmnindex to first non-empty party2 slot (always set when using fallback)
+                            pkmnindex = None
+                            for idx, p in enumerate(party2, start=1):
+                                if p.species_num() in range(1,808):
+                                    pkmnindex = idx
+                                    break
+                    except Exception:
+                        pass
                     typelist=["Normal","Fighting","Flying","Poison","Ground","Rock","Bug","Ghost","Steel","Fire","Water","Grass","Electric","Psychic","Ice","Dragon","Dark","Fairy"]
                     enemytypes=[]
                     try:
@@ -1955,18 +1993,32 @@ def run():
                                             window['-mv{}bp-'.format(pkmn.moves.index(move) + 1)].update(calcPower(pkmn,move,hpnum[0],hpnum[1],pkmnweight,weightquery), text_color='white')
                                         window['-mv{}acc-'.format(pkmn.moves.index(move) + 1)].update(acc)
                                         window['-mv{}ctc-'.format(pkmn.moves.index(move) + 1)].update(contact)
-                                elif (pkmn in party2) & (((gen == 6) & (party.index(pkmn)+1 == 7)) | ((gen == 7) & (party.index(pkmn)+1 == 7))): # this works for singles in XY, needs testing for all other games; only access first mon stuff, may want to figure out a way to include double battle (may not work for multis)
+                                elif (pkmn in party2) and (party2.index(pkmn) == 0):
                                 # elif ((pkmn in party2) & (party.index(pkmn)+1 == 7)) | ((enctype == 't') & (party.index(pkmn)+1 == 1)): # this works for singles in XY, needs testing for all other games; only access first mon stuff, may want to figure out a way to include double battle (may not work for multis)
                                     # print(pkmn.name, ';;;', pkmn.species, ';;;', party.index(pkmn)+1)
                                     if int(pkmn.cur_hp) > 750: ### Make sure the memory dump hasn't happened (or whatever causes the invalid values)
                                         continue
                                     if int(pkmn.level)>100:
                                         continue
-                                    if (emon != pkmn) & (emon == emon): # washing the data on mon change
-                                        ct = 0
-                                        antici = 0
-                                        enemymon = pkmn.name
-                                        enemydict = trackdata[pkmn.name]
+                                    # ensure pkmnindex and pk are correct for reading memory offsets
+                                    try:
+                                        pkmnindex = party2.index(pkmn) + 1
+                                    except Exception:
+                                        if 'pkmnindex' not in locals():
+                                            pkmnindex = 1
+                                        if (emon != pkmn) & (emon == emon): # washing the data on mon change
+                                            ct = 0
+                                            antici = 0
+                                            enemymon = pkmn.name
+                                            enemydict = trackdata[pkmn.name]
+                                    # Ensure we have a weight query for the displayed enemy as well
+                                    try:
+                                        if pkmn.suffix != "":
+                                            weightquery = f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" AND form = "{pkmn.suffix}" """
+                                        else:
+                                            weightquery = f"""SELECT kg FROM "pokemon.weight" WHERE name = "{pkmn.species}" """
+                                    except Exception:
+                                        weightquery = None
                                         for ct in range(1,5):
                                             window['-mv{}type-e-'.format(ct)].update(visible = False)
                                             window['-mv{}text-e-'.format(ct)].update(visible = False)
