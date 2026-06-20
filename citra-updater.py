@@ -71,10 +71,10 @@ except:
 
 try: # check for requests and install if not present
     import pandas as pd
-    if pd.__version__ != '2.2.3':
+    if pd.__version__ != '2.3.3':
         1/0
 except:
-    install('pandas==2.2.3')
+    install('pandas==2.3.3')
     import pandas as pd
 
 from util.gitcheck import gitcheck
