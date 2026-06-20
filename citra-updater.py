@@ -1290,8 +1290,8 @@ def run():
                         window['-abillist-e-'].update(trackdata[enemymon]['abilities'])
                     elif event == '-hpheals-':
                         # making stuff readable
-                        h = hphl
-                        del h['percent']
+                        h = hphl.copy()
+                        h.pop('percent', None)
                         h1 = f'HP Heals:\n{str(h).replace("'", '').replace('{', '').replace('}', '').title()}'
                         h2 = f'Status Heals:\n{str(statushl).replace("'", '').replace('{', '').replace('}', '').title()}'
                         h3 = f'PP Heals:\n{str(pphl).replace("'", '').replace('{', '').replace('}', '').title()}'
