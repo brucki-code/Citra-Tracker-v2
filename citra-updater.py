@@ -55,10 +55,10 @@ except:
 
 try: # check for Pillow and install if not present
     from PIL import Image
-    if Image.__version__ != '10.4.0':
+    if Image.__version__ != '12.0.0':
         1/0
 except:
-    install('Pillow==10.4.0')
+    install('Pillow==12.0.0')
     from PIL import Image
 
 try: # check for requests and install if not present
@@ -1335,8 +1335,14 @@ def run():
                             window['-bc5a-e-'].update(visible = False)
                             window['-bc6a-e-'].update(visible = False)
                             window['-bc7a-e-'].update(visible = False)
-                            for i in range(1,9):
-                                window[f'-badge{i}-'].Update(resize(f'images/badges{gameabbr}/{i}u.png', (badgesize,badgesize)), visible = True)
+                            if gameabbr not in ['SM', 'USUM']:
+                                for i in range(1, 9):
+                                    window[f'-badge{i}-'].Update(
+                                        resize(f'images/badges{gameabbr}/{i}u.png', (badgesize, badgesize)),
+                                        visible=True)
+                            else:
+                                for i in range(1, 9):
+                                    window[f'-badge{i}-'].Update(visible=False)
                             ct = 0
                             while ct < 4:
                                 ct += 1
@@ -1846,15 +1852,18 @@ def run():
                                         window['-clearnotes-solo-'].update(visible=True)
                                     window['-load-log-'].update(visible=True)
                                     window['-settings-'].update(visible=True)
-                                    for i in range(1,9):
-                                        # print(i, ';;;', f'images/badges{gameabbr}/{i}u.png')
-                                        b = math.log(badgect+1)/math.log(2)
-                                        if i > b:
-                                            # window[f'-badge{i}-'].Update(resize(f'images/badges{gameabbr}/{i}u.png', (badgesize,badgesize)), visible = True)
-                                            window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}u.png', visible = True)
-                                        else:
-                                            # window[f'-badge{i}-'].Update(resize(f'images/badges{gameabbr}/{i}o.png', (badgesize,badgesize)), visible = True)
-                                            window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}o.png', visible = True)
+                                    if gameabbr not in ['SM', 'USUM']:
+                                        for i in range(1, 9):
+                                            b = math.log(badgect + 1) / math.log(2)
+                                            if i > b:
+                                                window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}u.png',
+                                                                             visible=True)
+                                            else:
+                                                window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}o.png',
+                                                                             visible=True)
+                                    else:
+                                        for i in range(1, 9):
+                                            window[f'-badge{i}-'].Update(visible=False)
                                     # print(pkmn.held_item_num)
                                     for move in pkmn.moves:
                                         stab = ''
@@ -2334,16 +2343,18 @@ def run():
                                 window['-load-log-'].update(visible=True)
                                 window['-settings-'].update(visible=True)    
                                 # print('"badge count"=', badgect)                            
-                                for i in range(1,9):
-                                    # print(badgect, ';;;', f'images/badges{gameabbr}/{i}u.png')
-                                    # badge counts: viola = 1, grant = 3 (?), korrina = 7
-                                    b = math.log(badgect+1)/math.log(2)
-                                    if i > b:
-                                        # window[f'-badge{i}-'].Update(resize(f'images/badges{gameabbr}/{i}u.png', (badgesize,badgesize)), visible = True)
-                                        window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}u.png', visible = True)
-                                    else:
-                                        # window[f'-badge{i}-'].Update(resize(f'images/badges{gameabbr}/{i}o.png', (badgesize,badgesize)), visible = True)
-                                        window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}o.png', visible = True)
+                                if gameabbr not in ['SM', 'USUM']:
+                                    for i in range(1, 9):
+                                        b = math.log(badgect + 1) / math.log(2)
+                                        if i > b:
+                                            window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}u.png',
+                                                                         visible=True)
+                                        else:
+                                            window[f'-badge{i}-'].Update(f'images/badges{gameabbr}/{i}o.png',
+                                                                         visible=True)
+                                else:
+                                    for i in range(1, 9):
+                                        window[f'-badge{i}-'].Update(visible=False)
                                 for move in pkmn.moves:
                                     if move["maxpp"] == 0:
                                         continue
